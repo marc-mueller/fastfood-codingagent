@@ -26,11 +26,21 @@ public partial class AddItemActivity : WorkflowActivity<AddItemEvent, Order>
         var order = await _orderStorage.GetOrderById(input.OrderId);
         if (order != null && order.State == OrderState.Creating)
         {
-            var existingItem = order.Items?.FirstOrDefault(i => i.Id == input.Item.Id);
+            // Initialize Items collection if null
+            if (order.Items == null)
+            {
+                order.Items = new List<OrderItem>();
+            }
+            
+            // Check if an item with the same ProductId already exists
+            var existingItem = order.Items.FirstOrDefault(i => i.ProductId == input.Item.ProductId);
             if (existingItem != null)
             {
-                // item already exists, idempotent operation
-                return order;
+                // Merge by incrementing the quantity
+                existingItem.Quantity += input.Item.Quantity;
+                await _orderStorage.UpdateOrder(order);
+                await _daprClient.PublishEventAsync(FastFoodConstants.PubSubName, FastFoodConstants.EventNames.OrderUpdated, order.ToDto());
+                LogAddedItem(context.InstanceId, order.Id, input.Item.Id);
             }
             else
             {
