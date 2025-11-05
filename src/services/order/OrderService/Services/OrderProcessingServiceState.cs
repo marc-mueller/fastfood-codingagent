@@ -114,7 +114,18 @@ public partial class OrderProcessingServiceState : IOrderProcessingServiceState
         var order =  await _daprClient.GetStateAsync<Order>(FastFoodConstants.StateStoreName, GetStateId(orderid));
         if (order.State == OrderState.Creating)
         {
-            order.Items?.Add(item);
+            // Check if an item with the same ProductId already exists
+            var existingItem = order.Items?.FirstOrDefault(i => i.ProductId == item.ProductId);
+            if (existingItem != null)
+            {
+                // Merge by incrementing the quantity
+                existingItem.Quantity += item.Quantity;
+            }
+            else
+            {
+                // Add new item
+                order.Items?.Add(item);
+            }
 
             await _daprClient.SaveStateAsync(FastFoodConstants.StateStoreName,GetStateId(order.Id), order);
             await _daprClient.PublishEventAsync(FastFoodConstants.PubSubName, FastFoodConstants.EventNames.OrderUpdated, order.ToDto());
