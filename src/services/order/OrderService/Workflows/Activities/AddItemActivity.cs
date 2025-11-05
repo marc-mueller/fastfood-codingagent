@@ -26,8 +26,14 @@ public partial class AddItemActivity : WorkflowActivity<AddItemEvent, Order>
         var order = await _orderStorage.GetOrderById(input.OrderId);
         if (order != null && order.State == OrderState.Creating)
         {
+            // Initialize Items collection if null
+            if (order.Items == null)
+            {
+                order.Items = new List<OrderItem>();
+            }
+            
             // Check if an item with the same ProductId already exists
-            var existingItem = order.Items?.FirstOrDefault(i => i.ProductId == input.Item.ProductId);
+            var existingItem = order.Items.FirstOrDefault(i => i.ProductId == input.Item.ProductId);
             if (existingItem != null)
             {
                 // Merge by incrementing the quantity
