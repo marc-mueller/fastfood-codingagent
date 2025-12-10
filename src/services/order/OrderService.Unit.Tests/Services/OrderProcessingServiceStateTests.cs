@@ -154,7 +154,7 @@ public class OrderProcessingServiceStateTests
     }
 
     [Fact]
-    public async Task AddItem_WithMultipleDifferentProducts_AddsAllAsSeperateItems()
+    public async Task AddItem_WithMultipleDifferentProducts_AddsAllAsSeparateItems()
     {
         // Arrange
         var orderId = Guid.NewGuid();
